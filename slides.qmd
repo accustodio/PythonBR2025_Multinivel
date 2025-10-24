@@ -1,0 +1,188 @@
+---
+title: "Desvendando os Dados do ENEM com Modelagem Multinível"
+subtitle: "Uma Abordagem em Python para Desigualdades na Educação"
+author: " </br>  </br>  Angélica Custódio"
+format: 
+  revealjs:
+    theme: moon # Ou 'moon', 'black' para temas escuros mais modernos
+    slide-number: true
+    transition: slide
+    background-transition: fade
+    # Habilitar o menu de navegação lateral
+    menu: true
+jupyter: python3
+---
+
+# Quem sou eu?
+
+- Estudei Estatística e mestrado em Ciência da Computação, trabalho na área de dados há 9 anos. 
+
+- Gosto de café, sorvete, viagens, ler, escutar e viver boas histórias.
+
+- Faço parte da PyLadies e R-Ladies SP <3
+
+
+![](imagens/IMG1.jpeg){width=200px}
+![](imagens/pyladiessp.jpeg){width=300px}
+![](imagens/IMG2.jpeg){width=200px}
+
+---
+
+## Importância dos dados educacionais públicos
+
+### Auxilia a tomada de decisões em diversos contextos:
+- Avalia a educação básica
+- Suporta políticas públicas
+- Programas de ensino (básico e superior)
+- Impacta diretamente a educação superior por ser usado como nota de entrada em um grande número de Instituições de Ensino Superior (IES).
+
+
+### O ENEM em Números
+- Esse ano teve mais de **4,8 milhões de inscrições**!
+
+
+--- 
+
+## O Exame Nacional do Ensino Médio (ENEM)
+
+Composição da prova (180 questões):
+
+- Ciências Humanas e suas Tecnologias;
+- Ciências da Natureza e suas Tecnologias;
+- Linguagens, Códigos e suas Tecnologias;
+- Matemática e suas Tecnologias;
+- Redação.
+
+
+---
+
+## Teoria de Resposta ao Item
+
+
+![](imagens/tri.jpeg){width=700px}
+![](imagens/tri2.jpeg){width=300px}
+
+[Guia do Participante - Entenda sua nota](https://download.inep.gov.br/publicacoes/institucionais/avaliacoes_e_exames_da_educacao_basica/entenda_a_sua_nota_no_enem_guia_do_participante.pdf)
+
+---
+
+## A base de dados
+```{python}
+import pandas as pd
+file_path = 'microdados_enem_2023/DADOS/MICRODADOS_ENEM_2023.csv'
+
+# Carregar o arquivo CSV em um DataFrame
+df_microdados = pd.read_csv(file_path, delimiter=";", encoding='latin1' ).sample(n=10)
+df_microdados.head()
+```
+
+```{python}
+df_microdados.shape
+```
+Arquivo utilizado: _MICRODADOS_ENEM_2023.csv_
+
+Disponível em: Portal INEP
+
+
+
+---
+
+## A base de dados
+```{python}
+df_microdados[[ 'NU_NOTA_CN', 'NU_NOTA_CH', 'NU_NOTA_LC', 'NU_NOTA_MT']].head()
+```
+---
+
+## Atenção aos dados faltantes
+
+### A falta de informação pode ser uma informação importante!
+
+
+![](imagens/abstencao.jpeg){width=800px}
+
+[Fonte: Nexo](https://www.nexojornal.com.br/grafico/2023/11/13/abstencao-do-enem-2023-fica-proxima-ao-percentual-de-2022)
+
+
+---
+
+## Modelos Multiníveis (MM)
+
+Os MM modelam os efeitos aleatórios de uma variável de agrupamento, podendo considerar: A variação em torno do intercepto, em torno do coeficiente angular
+ou de ambos.
+
+![](imagens/mm.jpeg){width=400px}
+
+Fonte: "A brief introduction to mixed effects modelling and multi-model inference in ecology"
+
+---
+
+## O Problema da Regressão Clássica (OLS)
+
+  - OLS assume: **Independência** das observações.
+  - Falha na Educação: Alunos da mesma escola tendem a ter resultados correlacionados (o "Efeito Escola").
+  - OLS subestima o erro padrão e leva a **conclusões falsas**.
+
+---
+
+### Termos e Conceitos
+
+#### Fatores Fixos e Aleatórios
+
+"Parâmetros de efeitos fixos descrevem as relações das covariáveis com a variável dependente para toda a população, efeitos aleatórios são específicos de agrupamentos de observações dentro de uma população." West, Welch e Gatecki (2015, p.9) 
+
+
+---
+
+### Termos e Conceitos
+
+#### Niveis Hierarquicos
+
+A estrutura hierárquica dos dados é frequentemente chamada de "níveis" ou "agrupamentos". Cada nível superior representa uma variável de agrupamento adicional.
+
+- Nível 1: é o nível mais baixo da hierarquia, que é a unidade de análise, ou seja, pessoa, empresa, medicamentos, etc. Na equação do modelo multinível corresponde ao "i".
+- Nível 2: é o próximo nível na hierarquia dos dados, onde todas as unidades de análise do nível 1 são agrupadas de alguma forma. Na equação do modelo multinível corresponde ao "j".
+
+
+---
+
+### Modelos Multiníveis (MM)
+
+  - MM modela a variação em diferentes níveis da hierarquia.
+  - $\text{Nota}_{ij} = \beta_0 + u_{0j} + \beta_1 \cdot \text{Renda}_i + \varepsilon_{ij}$
+      - Onde $i$ é o aluno e $j$ é a escola.
+      - $u_{0j}$ é o **Intercepto Aleatório** (o efeito médio da Escola $j$).
+
+::: notes
+Dica: Use esta seção para explicar que o MM nos permite separar a variação devido ao aluno (Nível 1) e a variação devido à escola (Nível 2). Mantenha o foco conceitual.
+:::
+
+---
+
+## Aplicando Modelos Multiníveis aos Dados do ENEM
+
+### Setup em Python: statsmodels
+
+  - Usaremos o `statsmodels` para a implementação, focado na classe `MixedLM`.
+  - Outras bibliotecas: `pymer4` (wrapper para R `lme4`).
+
+---
+
+## Conclusão e Próximos Passos 
+
+### Recapitulando
+
+  - Modelagem Multinível é indicada para dados educacionais complexos.
+  - Python (`statsmodels`) torna essa análise avançada acessível.
+  - A analise de desempenho no ENEM é uma combinação de fatores individuais *e* de contexto.
+
+### Sugestões para o Futuro
+
+  - Análise Longitudinal (ENEM de múltiplos anos).
+
+---
+
+## Obrigada\!
+
+  - **GitHub:**  [accustodio](https://github.com/accustodio)
+  - **Contato:** [Linkedin](https://www.linkedin.com/in/angelicacustodio/)
+  - **Quarto:** Feito 100% com código.
